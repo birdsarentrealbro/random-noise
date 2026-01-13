@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:0;display:flex;align-items:center;justify-content:center;background:#000">
+<img id="img">
+
+<script>
+const parts = location.pathname.split("/").filter(Boolean);
+
+let w = 500;
+let h = 500;
+
+if (parts.length >= 2) {
+  const pw = parseInt(parts[0]);
+  const ph = parseInt(parts[1]);
+  if (!isNaN(pw) && !isNaN(ph)) {
+    w = pw;
+    h = ph;
+  }
+}
+
+const canvas = document.createElement("canvas");
+canvas.width = w;
+canvas.height = h;
+
+const ctx = canvas.getContext("2d");
+const imgData = ctx.createImageData(w, h);
+
+for (let i = 0; i < imgData.data.length; i += 4) {
+  imgData.data[i]     = Math.random() * 255;
+  imgData.data[i + 1] = Math.random() * 255;
+  imgData.data[i + 2] = Math.random() * 255;
+  imgData.data[i + 3] = 255;
+}
+
+ctx.putImageData(imgData, 0, 0);
+
+document.getElementById("img").src = canvas.toDataURL("image/png");
+</script>
+</body>
+</html>
