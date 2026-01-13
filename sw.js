@@ -2,14 +2,25 @@ self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   const parts = url.pathname.split("/").filter(Boolean);
 
-  let w = 500, h = 500, seed = 1, format = "png";
+  let w = 500;
+  let h = 500;
+  let seed = 1;
+  let format = "png";
 
   if (parts.length >= 2) {
     w = parseInt(parts[0]) || 500;
     h = parseInt(parts[1]) || 500;
   }
-  if (parts.length >= 3) seed = parseInt(parts[2]) || 1;
-  if (parts.length >= 4) format = parts[3];
+
+  if (parts.length >= 3) {
+    seed = parts[2] === "random"
+      ? Math.floor(Math.random() * 1e9)
+      : parseInt(parts[2]) || 1;
+  }
+
+  if (parts.length >= 4) {
+    format = parts[3].toLowerCase();
+  }
 
   if (!["png","jpg","webp"].includes(format)) return;
 
@@ -28,8 +39,8 @@ function mulberry32(a) {
 async function generateImage(w, h, seed, format) {
   const canvas = new OffscreenCanvas(w, h);
   const ctx = canvas.getContext("2d");
-  const img = ctx.createImageData(w, h);
 
+  const img = ctx.createImageData(w, h);
   const rand = mulberry32(seed);
 
   for (let i = 0; i < img.data.length; i += 4) {
@@ -42,13 +53,16 @@ async function generateImage(w, h, seed, format) {
   ctx.putImageData(img, 0, 0);
 
   const blob = await canvas.convertToBlob({
-    type: "image/" + format
+    type: "image/" + format,
+    quality: 0.92
   });
 
   return new Response(blob, {
     headers: {
       "Content-Type": blob.type,
-      "Cache-Control": "public, max-age=31536000"
+      "Cache-Control": seed === "random"
+        ? "no-store"
+        : "public, max-age=31536000, immutable"
     }
   });
 }
